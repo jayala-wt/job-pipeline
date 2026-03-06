@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ job.title }} @ {{ job.company }} - Jobs Pipeline</title>
+    <style>
+        :root {
+            --bg: #0a0f1a; --card: #111827; --border: #1f2937;
+            --text: #f3f4f6; --dim: #9ca3af; --green: #10b981;
+            --red: #ef4444; --yellow: #f59e0b; --blue: #3b82f6;
+            --accent: #06b6d4; --purple: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); min-height: 100vh;
+        }
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 20px; }
+        .back-link { color: var(--accent); text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .container { padding: 24px; max-width: 1000px; margin: 0 auto; }
+
+        .meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
+        }
+        .meta-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+        }
+        .meta-card h3 { font-size: 12px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
+        .meta-card .val { font-size: 16px; font-weight: 600; }
+
+        .score-big {
+            font-size: 48px; font-weight: 800; text-align: center;
+            padding: 20px; margin-bottom: 24px; border-radius: 12px;
+            background: var(--card); border: 1px solid var(--border);
+        }
+        .score-big.high { color: var(--green); }
+        .score-big.mid { color: var(--yellow); }
+        .score-big.low { color: var(--red); }
+        .score-big.none { color: var(--dim); }
+        .score-big small { display: block; font-size: 12px; color: var(--dim); font-weight: 400; margin-top: 4px; }
+
+        .skills-section { margin-bottom: 24px; }
+        .skills-section h3 { font-size: 14px; margin-bottom: 8px; color: var(--dim); }
+        .skill-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 12px; margin: 2px 4px 2px 0;
+        }
+        .skill-tag.matched { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .skill-tag.missing { background: rgba(239, 68, 68, 0.1); color: var(--red); }
+
+        .description {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 20px; margin-bottom: 24px;
+            font-size: 13px; line-height: 1.7; color: var(--dim);
+            max-height: 500px; overflow-y: auto; white-space: pre-wrap;
+        }
+
+        .actions-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+        .btn {
+            padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text); font-size: 13px;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+        .notes-area {
+            width: 100%; min-height: 80px; padding: 12px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 13px;
+            resize: vertical; font-family: inherit;
+        }
+        .notes-area:focus { outline: none; border-color: var(--accent); }
+
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; padding: 12px 20px;
+            background: var(--green); color: #000; border-radius: 8px;
+            font-size: 13px; font-weight: 600; display: none; z-index: 9999;
+        }
+        .toast.error { background: var(--red); color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ job.title }}</h1>
+        <a href="/jobs" class="back-link">← Back to Jobs</a>
+    </div>
+
+    <div class="container">
+        <!-- Score -->
+        {% if job.match_score is not none %}
+            {% if job.match_score >= 40 %}
+            <div class="score-big high">
+            {% elif job.match_score >= 20 %}
+            <div class="score-big mid">
+            {% else %}
+            <div class="score-big low">
+            {% endif %}
+                {{ "%.1f"|format(job.match_score) }}
+                <small>Match Score</small>
+            </div>
+        {% else %}
+            <div class="score-big none">—<small>Not scored yet</small></div>
+        {% endif %}
+
+        <!-- Meta -->
+        <div class="meta-grid">
+            <div class="meta-card">
+                <h3>Company</h3>
+                <div class="val">{{ job.company }}</div>
+            </div>
+            <div class="meta-card">
+                <h3>Location</h3>
+                <div class="val">{{ job.location or '—' }} {% if job.remote %}🌐 Remote{% endif %}</div>
+            </div>
+            <div class="meta-card">
+                <h3>Source</h3>
+                <div class="val">{{ job.source }} ({{ job.ats_type or '—' }})</div>
+            </div>
+            <div class="meta-card">
+                <h3>Status</h3>
+                <div class="val">
+                    <select id="status-select" style="padding: 4px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px;">
+                        {% for s in ['new', 'to_apply', 'applied', 'interview', 'offer', 'rejected', 'passed'] %}
+                        <option value="{{ s }}" {% if job.status == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% if job.salary_min or job.salary_max %}
+            <div class="meta-card">
+                <h3>Salary</h3>
+                <div class="val" style="color: var(--green);">
+                    {% if job.salary_min %}${{ "{:,}".format(job.salary_min) }}{% endif %}
+                    {% if job.salary_min and job.salary_max %} – {% endif %}
+                    {% if job.salary_max %}${{ "{:,}".format(job.salary_max) }}{% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="meta-card">
+                <h3>Found</h3>
+                <div class="val">{{ job.date_found[:10] if job.date_found else '—' }}</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions-bar">
+            {% if job.url %}
+            <a href="{{ job.url }}" target="_blank" class="btn primary">Open Application Page ↗</a>
+            {% endif %}
+            <button class="btn" onclick="scoreThis()">📊 Re-score</button>
+        </div>
+
+        <!-- Skills -->
+        {% if skills %}
+        <div class="skills-section">
+            <h3>Matched Skills</h3>
+            {% for s in skills if s.matched %}
+            <span class="skill-tag matched">✓ {{ s.skill }}</span>
+            {% endfor %}
+        </div>
+        <div class="skills-section">
+            <h3>Missing from Profile</h3>
+            {% for s in skills if not s.matched %}
+            <span class="skill-tag missing">✗ {{ s.skill }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        <h3 style="font-size: 14px; color: var(--dim); margin-bottom: 8px;">Notes</h3>
+        <textarea class="notes-area" id="notes" placeholder="Add notes about this job...">{{ job.notes or '' }}</textarea>
+        <button class="btn" onclick="saveNotes()" style="margin-top: 8px;">Save Notes</button>
+
+        <!-- Description -->
+        <h3 style="font-size: 14px; color: var(--dim); margin: 20px 0 8px;">Job Description</h3>
+        <div class="description">{{ job.description_text or 'No description available.' }}</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const JOB_ID = {{ job.id }};
+
+        function showToast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        document.getElementById('status-select').addEventListener('change', async function() {
+            try {
+                const resp = await fetch(`/jobs/api/jobs/${JOB_ID}/status`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({status: this.value})
+                });
+                const data = await resp.json();
+                showToast(data.ok ? 'Status updated' : 'Error: ' + data.error, !data.ok);
+            } catch(e) { showToast('Failed', true); }
+        });
+
+        async function saveNotes() {
+            try {
+                const resp = await fetch(`/jobs/api/jobs/${JOB_ID}/notes`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({notes: document.getElementById('notes').value})
+                });
+                const data = await resp.json();
+                showToast(data.ok ? 'Notes saved' : 'Error', !data.ok);
+            } catch(e) { showToast('Failed', true); }
+        }
+
+        async function scoreThis() {
+            showToast('Scoring...');
+            try {
+                const resp = await fetch(`/jobs/api/score/${JOB_ID}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await resp.json();
+                if (data.score !== undefined) {
+                    showToast(`Score: ${data.score}`);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error: ' + (data.error || 'unknown'), true);
+                }
+            } catch(e) { showToast('Failed', true); }
+        }
+    </script>
+</body>
+</html>

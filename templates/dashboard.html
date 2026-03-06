@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💼 Jobs Pipeline - Wanatux Homelab</title>
+    <style>
+        :root {
+            --bg: #0a0f1a;
+            --card: #111827;
+            --border: #1f2937;
+            --text: #f3f4f6;
+            --dim: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --blue: #3b82f6;
+            --accent: #06b6d4;
+            --purple: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 24px; display: flex; align-items: center; gap: 12px; }
+        .header h1 span { color: var(--accent); }
+        .back-link { color: var(--accent); text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+
+        .container { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+        /* Stats */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px; text-align: center;
+        }
+        .stat-card .label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; }
+        .stat-card .value.green { color: var(--green); }
+        .stat-card .value.blue { color: var(--blue); }
+        .stat-card .value.yellow { color: var(--yellow); }
+        .stat-card .value.red { color: var(--red); }
+        .stat-card .value.purple { color: var(--purple); }
+
+        /* Actions bar */
+        .actions {
+            display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+        }
+        .btn {
+            padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card); color: var(--text); font-size: 13px;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+        .btn.primary:hover { opacity: 0.85; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Filters */
+        .filters {
+            display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+        }
+        .filters select, .filters input {
+            padding: 7px 12px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text); font-size: 13px;
+        }
+        .filters select:focus, .filters input:focus { outline: none; border-color: var(--accent); }
+
+        /* Jobs table */
+        .jobs-table { width: 100%; border-collapse: collapse; }
+        .jobs-table th {
+            text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+            color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border); background: var(--card);
+            position: sticky; top: 0;
+        }
+        .jobs-table td {
+            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            font-size: 13px; vertical-align: middle;
+        }
+        .jobs-table tr:hover { background: rgba(6, 182, 212, 0.05); }
+        .jobs-table a { color: var(--accent); text-decoration: none; }
+        .jobs-table a:hover { text-decoration: underline; }
+
+        /* Score badge */
+        .score {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 12px; font-weight: 600;
+        }
+        .score.high { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .score.mid { background: rgba(245, 158, 11, 0.15); color: var(--yellow); }
+        .score.low { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .score.none { background: rgba(156, 163, 175, 0.15); color: var(--dim); }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .status-badge.new { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+        .status-badge.to_apply { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+        .status-badge.applied { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .status-badge.interview { background: rgba(245, 158, 11, 0.15); color: var(--yellow); }
+        .status-badge.offer { background: rgba(16, 185, 129, 0.3); color: var(--green); }
+        .status-badge.rejected { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .status-badge.passed { background: rgba(156, 163, 175, 0.15); color: var(--dim); }
+
+        .source-tag {
+            display: inline-block; padding: 1px 6px; border-radius: 4px;
+            font-size: 10px; background: rgba(156, 163, 175, 0.1); color: var(--dim);
+        }
+
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; padding: 12px 20px;
+            background: var(--green); color: #000; border-radius: 8px;
+            font-size: 13px; font-weight: 600; display: none; z-index: 9999;
+        }
+        .toast.error { background: var(--red); color: #fff; }
+
+        .empty { text-align: center; padding: 60px 20px; color: var(--dim); }
+        .empty h3 { margin-bottom: 8px; font-size: 18px; color: var(--text); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💼 <span>Jobs Pipeline</span></h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="label">Total Jobs</div>
+                <div class="value">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">New</div>
+                <div class="value blue">{{ stats.new }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Applied</div>
+                <div class="value green">{{ stats.applied }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Interview</div>
+                <div class="value yellow">{{ stats.interview }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Rejected</div>
+                <div class="value red">{{ stats.rejected }}</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="btn primary" onclick="runIngest('all')" id="btn-ingest">🔄 Run Full Ingestion</button>
+            <button class="btn" onclick="runIngest('greenhouse')">Greenhouse</button>
+            <button class="btn" onclick="runIngest('lever')">Lever</button>
+            <button class="btn" onclick="runIngest('remoteok')">RemoteOK</button>
+            <button class="btn" onclick="runIngest('hn')">HN Who's Hiring</button>
+            <span style="border-left: 1px solid var(--border); height: 24px; margin: 0 4px;"></span>
+            <button class="btn" onclick="scoreAll()">📊 Score All Unscored</button>
+        </div>
+
+        <!-- Filters -->
+        <form class="filters" method="get" action="/jobs">
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="new" {% if filters.status == 'new' %}selected{% endif %}>New</option>
+                <option value="to_apply" {% if filters.status == 'to_apply' %}selected{% endif %}>To Apply</option>
+                <option value="applied" {% if filters.status == 'applied' %}selected{% endif %}>Applied</option>
+                <option value="interview" {% if filters.status == 'interview' %}selected{% endif %}>Interview</option>
+                <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                <option value="passed" {% if filters.status == 'passed' %}selected{% endif %}>Passed</option>
+            </select>
+            <select name="source">
+                <option value="">All Sources</option>
+                {% for src in sources %}
+                <option value="{{ src }}" {% if filters.source == src %}selected{% endif %}>{{ src }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="min_score" placeholder="Min Score" value="{{ filters.min_score }}"
+                   min="0" max="100" step="5" style="width: 100px;">
+            <input type="text" name="q" placeholder="Search company/title..." value="{{ filters.q }}"
+                   style="width: 200px;">
+            <button type="submit" class="btn">Filter</button>
+            <a href="/jobs" class="btn">Clear</a>
+        </form>
+
+        <!-- Jobs Table -->
+        {% if jobs %}
+        <table class="jobs-table">
+            <thead>
+                <tr>
+                    <th>Score</th>
+                    <th>Company</th>
+                    <th>Title</th>
+                    <th>Location</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Found</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>
+                        {% if job.match_score is not none %}
+                            {% if job.match_score >= 40 %}
+                            <span class="score high">{{ "%.0f"|format(job.match_score) }}</span>
+                            {% elif job.match_score >= 20 %}
+                            <span class="score mid">{{ "%.0f"|format(job.match_score) }}</span>
+                            {% else %}
+                            <span class="score low">{{ "%.0f"|format(job.match_score) }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="score none">—</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="/jobs/{{ job.id }}">{{ job.company }}</a></td>
+                    <td><a href="/jobs/{{ job.id }}">{{ job.title|truncate(60) }}</a></td>
+                    <td style="color: var(--dim); font-size: 12px;">
+                        {{ job.location|truncate(30) if job.location else '—' }}
+                        {% if job.remote %}<span style="color: var(--green);">🌐</span>{% endif %}
+                    </td>
+                    <td><span class="source-tag">{{ job.source }}</span></td>
+                    <td>
+                        <select class="status-select" data-job-id="{{ job.id }}"
+                                style="padding: 2px 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px;">
+                            {% for s in ['new', 'to_apply', 'applied', 'interview', 'offer', 'rejected', 'passed'] %}
+                            <option value="{{ s }}" {% if job.status == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="color: var(--dim); font-size: 12px;">
+                        {{ job.date_found[:10] if job.date_found else '—' }}
+                    </td>
+                    <td>
+                        {% if job.url %}
+                        <a href="{{ job.url }}" target="_blank" class="btn" style="padding: 3px 8px; font-size: 11px;">Open ↗</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+            <h3>No jobs yet</h3>
+            <p>Click "Run Full Ingestion" to start pulling jobs from Greenhouse, Lever, RemoteOK, and HN.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function showToast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 4000);
+        }
+
+        async function runIngest(source) {
+            const btn = document.getElementById('btn-ingest');
+            btn.disabled = true;
+            btn.textContent = '⏳ Ingesting...';
+            showToast('Ingestion started for: ' + source + ' (running in background)');
+            try {
+                const resp = await fetch('/jobs/api/ingest', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({source: source})
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    showToast('Error: ' + data.error, true);
+                } else {
+                    showToast('Ingestion running in background — refresh in a minute to see results');
+                }
+            } catch (e) {
+                showToast('Request failed: ' + e.message, true);
+            }
+            btn.disabled = false;
+            btn.textContent = '🔄 Run Full Ingestion';
+        }
+
+        async function scoreAll() {
+            showToast('Scoring all unscored jobs...');
+            try {
+                const resp = await fetch('/jobs/api/score/all', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    showToast('Error: ' + data.error, true);
+                } else {
+                    showToast(`Scored ${data.scored} jobs (${data.errors} errors)`);
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (e) {
+                showToast('Request failed: ' + e.message, true);
+            }
+        }
+
+        // Inline status change
+        document.querySelectorAll('.status-select').forEach(sel => {
+            sel.addEventListener('change', async function() {
+                const jobId = this.dataset.jobId;
+                const status = this.value;
+                try {
+                    const resp = await fetch(`/jobs/api/jobs/${jobId}/status`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({status: status})
+                    });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        showToast('Status updated');
+                    } else {
+                        showToast('Error: ' + (data.error || 'unknown'), true);
+                    }
+                } catch (e) {
+                    showToast('Failed: ' + e.message, true);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
