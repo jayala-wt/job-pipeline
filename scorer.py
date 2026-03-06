@@ -3,6 +3,7 @@ Job Fit Scorer
 Scores job descriptions against the master skill profile using
 keyword matching and TF-IDF similarity.
 """
+import os
 import re
 import sqlite3
 import json
